@@ -6,11 +6,11 @@ pyautogui.PAUSE = 0.5
 
 screenWidth, screenHeight = pyautogui.size()
 
-def write_clicks(clickArray):
-    with open('mouseClicks.csv','w') as clickList:
-        for click in clickArray[1:-1]:
+def write_clicks(clickArray, filename):
+    with open(str(filename) + '.csv','w') as clickList:
+        for click in clickArray[1:-2]:
             clickList.write(f'{click[0]},{click[1]}\n')
-        print(clickArray)
+
 
 recording = False #False if the program is not recording to the click list, True if it
 
