@@ -8,9 +8,6 @@ import pandas as pd
 from pynput import mouse
 import os
 
-pyautogui.FAILSAFE = True
-pyautogui.PAUSE = 2
-
 #GUI window class
 class exporterGUI(tk.Tk):
 
@@ -90,26 +87,9 @@ class exporterGUI(tk.Tk):
         except:
             messagebox.showerror("Error","Please input a valid filename! (.csv file extension automatically added)")
 
-screenWidth, screenHeight = pyautogui.size()
-
-def write_clicks(clickArray, filename):
-    print('writing,', clickArray)
-    with open(str(filename),'w') as clickList:
-        for click in clickArray[1:-2]:
-            clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
-
-
-recording = False #False if the program is not recording to the click list, True if it is
-
-clicks = []
-def on_click(x, y, button, pressed):
-    if pressed and recording:
-        clicks.append((x,y, button))
-        print(x,',',y, ',',button)
-
 if __name__ == '__main__':
     #start listening for clicks
-    mouse_listener = mouse.Listener(on_click=on_click)
+    mouse_listener = mouse.Listener(on_click=clickRecorder.on_click)
     mouse_listener.start()
     root = exporterGUI()
     root.mainloop()

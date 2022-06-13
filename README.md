@@ -1,1 +1,2 @@
 # SIMS-Analysis
+The SIMS-Analysis program allows the user to record a series of clicks and to use these recordings to quickly make python scripts that manipulate WinCadence using the **pyautogui** module. This is essential since WinCadence does not have a feature that can automatically export large amounts of data. 
