@@ -7,7 +7,7 @@ One issue with pyautogui programs is that they can cause a lot of damage is you 
 ### pyautogui.PAUSE
 pyautogui.PAUSE allows the user to control the delay between pyautogui calls. It is highly recommended that the user sets this to a value to 0.5 or greater during testing so that the program cannot inflict a lot of damage if it does not execute as planned. Once you are confident that the program works, you can reduce pyautogui.PAUSE to a lower value. 
 I would caution against setting it to 0 if you are executing complex clickstrokes as your computer will need time to execute the instructions being given to it by your clicks, and having no delay between your clicks can create a lot of confusion for the program on which they are being executed.
-## recorderGUI 
+## recorderGUI.py
 The first of the two main programs is the click recording graphical user interface, recorderGUI. This interface provides a way for the user to record the positions of clicks on their screen to a .csv file. The interface has five components: an entry box labeled "Input file name," and four buttons, labeled "Record," "Stop," "Play," and "Done."
 ### Making Recordings
 To make a recording, type in what you would like your file to be called in the "Input File Name" entry box, **without the .csv extension**, then press record. If you would like to overwrite a preexisting file, simply type in that file's name, and a dialog will appear asking you to confirm. Once you click "Record," click on the window which you would like to manipulate. This click will not be recorded.
@@ -15,3 +15,15 @@ Once you have selected the window to be manipulated, perform the clickstroke you
 recorderGUI has the capability to record left and right clicks. Currently it cannot record double clicks.
 ### Playing Back Recordings
 If you would like to play back your recording, type in the file name of the recording and click "Play." "Play" uses the pyautogui module to repeat the clickstroke represented by the coordinates in the file. This is useful for testing, as it lets the user determine whether the recording will have the desired effect. When you are satisfied with the recording, click "Done" to clear the entry box.
+## controlScript.py
+controlScript.py uses recordings made with recorderGUI.py and other fuctionality provided by pyautogui to extract image data from WinCadence over a set of time intervals. Data analyzed with WinCadence and extracted with pandas provided us with a list of times (see the readDepth.py script). From this list, a sequence of two second time intervals was created, and image data was extracted over these time intervals for Fe, Cr, Ni, and all ions combined.
+It should be noted that controlScript.py may only work on the computer on which it was written, as the pyautogui commands are dependent on the screen size. Additionally, this script operates by showing the user a pop up dialog, from which it selects the WinCadence icon in the toolbar.
+The following is a discussion of the functions used in this script:
+### readClicks()
+readClicks() reads a .csv file produced by recorderGUI.py and executes a series of pyautogui clicks based on the data stored in that file. The function reads data about where on the screen the click occurred, and whether it was a left or right click; it then executes the corresponding action.
+### clearEntry()
+Since a double click functionality was difficult to implement in recorderGUI.py, an alternative method for clearing text boxes was used. clearEntry() is a function that presses the backspace key 10 times. Note that for this function to work, one must select the far right side of the text box that they wish to clear.
+### readDepth.readDepth('Depth.txt')
+This function reads the 'Depth.txt' file into a pandas dataframe. It calculates the time steps based on the cycle time and number, and adds a time interval to each entry by adding and subtracting one second from each time step value, giving a two second time interval. pyautogui then inputs this time interval into WinCadence to extract the appropriate data.
+### Starting The Program
+Right now, the program is not versatile and requires specific starting conditions. You must first run WinCadence and define the peaks for the different metals manually. Then, select Acquire From Raw File in AcqSetup and select the data file on which to work. Once this is done, open up "Images." Once this step is complete, assuming you have already extracted your time data into your Depth.txt file, you are ready to run controlScript.py and extract the image data.

@@ -1,4 +1,3 @@
-from turtle import clear
 import pyautogui
 import pandas as pd
 from tkinter import messagebox
