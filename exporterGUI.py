@@ -56,9 +56,7 @@ class exporterGUI(tk.Tk):
         filename = self.entry.get()
         try:
             if clickRecorder.recording == True:
-                clickRecorder.write_clicks(clickRecorder.clicks, filename) #write clicks to a .csv file
-                clickRecorder.clicks.clear()
-                clickRecorder.recording = False
+                clickRecorder.write_clicks(clickRecorder.clicks, filename) #write clicks to a .1.0                clickRecorder.recording = False
         except:
             messagebox.showerror("Error","Please input a valid filename! (.csv file extension automatically added)")
         self.Stop['state'] = DISABLED
@@ -66,11 +64,15 @@ class exporterGUI(tk.Tk):
 
     def play(self):
         try:
-            clicks = pd.read_csv(self.entry.get() + '.csv', names=['x','y'])
+            clicks = pd.read_csv(self.entry.get() + '.csv', names=['x','y', 'button'])
             for index, row in clicks.iterrows():
-                pyautogui.click(row['x'], row['y'])
+                if row['button'] == 'Button.left':
+                    pyautogui.click(row['x'], row['y'])
+                elif row['button'] == 'Button.right':
+                    pyautogui.rightClick(row['x'], row['y'])
         except:
             messagebox.showerror("Error","Please input a valid filename! (.csv file extension automatically added)")
+
 if __name__ == '__main__':
     #start listening for clicks
     mouse_listener = mouse.Listener(on_click=clickRecorder.on_click)
