@@ -7,7 +7,7 @@ pyautogui.PAUSE = 2
 screenWidth, screenHeight = pyautogui.size()
 
 def write_clicks(clickArray, filename):
-    with open(str(filename) + '.csv','w') as clickList:
+    with open(str(filename),'w') as clickList:
         for click in clickArray[1:-2]:
             clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
 
