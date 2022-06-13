@@ -1,2 +1,17 @@
 # SIMS-Analysis
 The SIMS-Analysis program allows the user to record a series of clicks and to use these recordings to quickly make python scripts that manipulate WinCadence using the **pyautogui** module. This is essential since WinCadence does not have a feature that can automatically export large amounts of data. 
+This repository contains two primary scripts. The first is a GUI that allows the user to easily and quickly record series of clicks to .csv file and to play those clicks back using the **pyautogui** module. The second script is an example that extracts SIMS image data from WinCadence over a set of two second time intervals and elements, and stores them as .dat files in a folder.
+## Important Things To Know
+### pyautogui.FAILSAFE
+One issue with pyautogui programs is that they can cause a lot of damage is you let them run where they aren't supposed to. For example, pyautogui can mess up your code by clicking and typing/deleting things in your development environment (i.e. VIM). pyautogui.FAILSAFE is a feature which, when turned on, allows the user to terminate the program by mousing up to the top left corner of the screen. Otherwise, the user will have no way of ending the program as the computer will have control over the mouse.
+### pyautogui.PAUSE
+pyautogui.PAUSE allows the user to control the delay between pyautogui calls. It is highly recommended that the user sets this to a value to 0.5 or greater during testing so that the program cannot inflict a lot of damage if it does not execute as planned. Once you are confident that the program works, you can reduce pyautogui.PAUSE to a lower value. 
+I would caution against setting it to 0 if you are executing complex clickstrokes as your computer will need time to execute the instructions being given to it by your clicks, and having no delay between your clicks can create a lot of confusion for the program on which they are being executed.
+## recorderGUI 
+The first of the two main programs is the click recording graphical user interface, recorderGUI. This interface provides a way for the user to record the positions of clicks on their screen to a .csv file. The interface has five components: an entry box labeled "Input file name," and four buttons, labeled "Record," "Stop," "Play," and "Done."
+### Making Recordings
+To make a recording, type in what you would like your file to be called in the "Input File Name" entry box, **without the .csv extension**, then press record. If you would like to overwrite a preexisting file, simply type in that file's name, and a dialog will appear asking you to confirm. Once you click "Record," click on the window which you would like to manipulate. This click will not be recorded.
+Once you have selected the window to be manipulated, perform the clickstroke you want to record. When you are finished, click on the GUI interface and click "Stop." These last two clicks will not be saved. 
+recorderGUI has the capability to record left and right clicks. Currently it cannot record double clicks.
+### Playing Back Recordings
+If you would like to play back your recording, type in the file name of the recording and click "Play." "Play" uses the pyautogui module to repeat the clickstroke represented by the coordinates in the file. This is useful for testing, as it lets the user determine whether the recording will have the desired effect. When you are satisfied with the recording, click "Done" to clear the entry box.
