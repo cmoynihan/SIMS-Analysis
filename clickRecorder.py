@@ -7,6 +7,7 @@ pyautogui.PAUSE = 2
 screenWidth, screenHeight = pyautogui.size()
 
 def write_clicks(clickArray, filename):
+    print('writing,', clickArray)
     with open(str(filename),'w') as clickList:
         for click in clickArray[1:-2]:
             clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
@@ -18,3 +19,4 @@ clicks = []
 def on_click(x, y, button, pressed):
     if pressed and recording:
         clicks.append((x,y, button))
+        print(x,',',y, ',',button)

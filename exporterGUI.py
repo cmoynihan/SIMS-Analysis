@@ -54,12 +54,10 @@ class exporterGUI(tk.Tk):
     
     def stop(self):
         filename = self.entry.get() + '.csv'
-        try:
-            if clickRecorder.recording == True:
-                clickRecorder.write_clicks(clickRecorder.clicks, filename) #write clicks to a
-                clickRecorder.recording = False
-        except:
-            messagebox.showerror("Error","Please input a valid filename! (.csv file extension automatically added)")
+        if clickRecorder.recording == True:
+            clickRecorder.write_clicks(clickRecorder.clicks, filename) #write clicks to a
+        clickRecorder.recording = False
+        clickRecorder.clicks = []
         self.Stop['state'] = DISABLED
         
 
