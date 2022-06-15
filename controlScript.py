@@ -1,9 +1,9 @@
 import pyautogui
 import pandas as pd
-from tkinter import messagebox
+from tkinter import messagebox #! standard library packages first
 import readDepth
 
-def readClicks(clickfile):
+def readClicks(clickfile): #! this code feels repeated from exporter but maybe I am wrong
     clicks = pd.read_csv(clickfile, names=['x','y', 'button'])
     for index, row in clicks.iterrows():
         if row['button'] == 'Button.left':
@@ -11,7 +11,7 @@ def readClicks(clickfile):
         elif row['button'] == 'Button.right':
             pyautogui.rightClick(row['x'], row['y'])
 
-def clearEntry():
+def clearEntry(): #! seems to work sometimes. What about a double click backspace or a click, shift, start kinda thing
     pyautogui.PAUSE = 0
     for i in range(10):
         pyautogui.hotkey('backspace')
@@ -22,7 +22,7 @@ if __name__ == '__main__':
     data = readDepth.readDepth('Depth.txt')
     species = ['Total_Ion', 'Fe', 'Ni', 'Cr']
     pyautogui.PAUSE = pauseTime
-    proceed = messagebox.askokcancel(title="Proceed?", message="Would you like to proceed?")
+    proceed = messagebox.askokcancel(title="Proceed?", message="Would you like to proceed?") #! why would they not if they ran this script?
     if proceed:
         readClicks('selectWinCadence.csv')
         for time in data['Time Window']:
@@ -36,7 +36,7 @@ if __name__ == '__main__':
             readClicks('sequence3.csv')
             pyautogui.PAUSE = pauseTime
             for i in range(4): #save image data
-                name = f'{time[0]}s-{time[1]}s_{species[i]}'
+                name = f'{time[0]}s-{time[1]}s_{species[i]}' # I would rather it be `iteration_species.dat`
                 readClicks('sequence4.csv')
                 clearEntry()
                 pyautogui.typewrite(name + '.dat')
