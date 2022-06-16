@@ -13,13 +13,13 @@ screenWidth, screenHeight = pyautogui.size() #! this is never used again, why is
 #GUI window class
 class recorderGUI(tk.Tk):
     '''
-    GUI class for click recorder. Has 5 buttons: Record, Pause, Stop, Play, Done, and an entry box.
-
+    GUI class for click recorder. Has 6 buttons: Record, Pause, Stop, Play, Done, Add Text Marker, and an entry box.
     Record: Records a sequence of clicks until the user clicks Stop. Can record left and right clicks
     Pause: Pauses the recording until user clicks Record again
     Stop: Stops the recording and writes to a .csv with the name indicated in the entry box
     Play: Reads the .csv file with the name in the entry box, then reproduces the clicks with pyautogui
     Done: Clears the entry box
+    
     
     '''
     
@@ -28,6 +28,7 @@ class recorderGUI(tk.Tk):
         self.title('Button Sequencer')
         self.recording = False
         self.clicks = []
+        self.paused = False
         self.attributes('-topmost', True)
         mouse_listener = mouse.Listener(on_click=self.on_click)
         mouse_listener.start()
@@ -59,35 +60,42 @@ class recorderGUI(tk.Tk):
         self.entry.grid(row=0, column=1, sticky='ew')
         self.Clear = ttk.Button(frame, text='Clear', command=self.clear)
         self.Clear.grid(row=3, column=0, sticky='ew')
+        self.AddTextMarker = ttk.Button(frame, text='Add Text Marker', command=self.addTextMarker, state=DISABLED)
+        self.AddTextMarker.grid(row=3, column=1, sticky='ew')
+
+        # disable window resizing
+        self.resizable(False, False)
 
     # clear button binding
     def clear(self):
-        self.entry.delete(0,END) #! probably could just use a lambda function here command=lambda : self.entry.delete(0,END)
+        self.entry.delete(0,END)
 
     # record button binding. Records the locations of a series of clicks to a file.
     def record(self):
-        banned = '/\.?%'
-        if any(elem in self.entry.get() for elem in banned) or len(self.entry.get()) == 0:
-            messagebox.showerror(title='Error', message='Please input a valid filename!')
-            self.clear()
-            return
-        filename = self.entry.get() + '.csv'
-
-        self.entry['state'] = DISABLED
+        if not self.paused:
+            # Check for invalid characters
+            banned = '/\.?%'
+            if any(elem in self.entry.get() for elem in banned) or len(self.entry.get()) == 0:
+                messagebox.showerror(title='Error', message='Please input a valid filename!')
+                self.clear()
+                return
+            filename = self.entry.get() + '.csv'
+            # check for duplicates
+            if filename in os.listdir('clickSequences'):
+                #if a duplicate is found, ask the user if they would like to replace it
+                replace = messagebox.askyesno(title="Replace saved file?", message='The filename you have input already exists. Do you want to replace it?')
+                if not replace:
+                    return
+            self.entry['state'] = DISABLED
+            self.Play['state'] = DISABLED
+            self.Clear['state'] = DISABLED
+        self.AddTextMarker['state'] = NORMAL
         self.Record['state'] = DISABLED
         self.Pause['state'] = NORMAL
-        self.Play['state'] = DISABLED
-        self.Clear['state'] = DISABLED
-        #check for duplicates
-        if filename in os.listdir():
-            #if a duplicate is found, ask the user if they would like to replace it
-            replace = messagebox.askyesno(title="Replace saved file?", message='The filename you have input already exists. Do you want to replace it?')
-            if not replace:
-                return
-    
+        self.paused = False
         self.recording = True
         self.Stop['state'] = NORMAL #make the "Stop" button not grey
-    
+        
     #stop button binding. Ends recording
     def stop(self):
         try:
@@ -99,37 +107,55 @@ class recorderGUI(tk.Tk):
             if ok:
                 self.stop()
         self.recording = False # turn off click recording 
+        self.paused = False
+        self.Pause['state'] = DISABLED
         self.Stop['state'] = DISABLED # grey out stop button
         self.Record['state'] = NORMAL
         self.entry['state'] = NORMAL
         self.Play['state'] = NORMAL
+        self.Clear['state'] = NORMAL
+        self.AddTextMarker['state'] = DISABLED
         self.clicks = []
 
+    # pause button method
     def pause(self):
         if self.recording:
+            self.paused = True
             self.recording = False
+            self.clicks.pop()
             self.Record['state'] = NORMAL
+            self.AddTextMarker['state'] = DISABLED
 
     # play button binding. Plays back recording with the filename indicated in the Entry box
     def play(self):
         try:
-            clicklist = pd.read_csv(self.entry.get() + '.csv', names=['x','y', 'button']) # read clicks from file into a dataframe
-            # iterate through the rows of the dataframe to extract click locations
-            for index, row in clicklist.iterrows():
-                # left or right click based on input
-                if row['button'] == 'Button.left':
-                    pyautogui.click(row['x'], row['y'])
-                elif row['button'] == 'Button.right':
-                    pyautogui.rightClick(row['x'], row['y'])
+            clicklist = pd.read_csv(os.path.join('clickSequences', self.entry.get() + '.csv'), names=['x','y', 'button']) # read clicks from file into a dataframe
         except FileNotFoundError:
             messagebox.showerror(title="Error", message="File not found")
             self.clear()
-        
+            return
+
+        # self.withdraw() # hide the window
+        # iterate through the rows of the dataframe to extract click locations
+        for index, row in clicklist.iterrows():
+            if row['x'] != 'Text':
+                # left or right click based on input
+                pos = tuple((row['x'], row['y']))
+                if row['button'] == 'Button.left':
+                    pyautogui.click(pos)
+                elif row['button'] == 'Button.right':
+                    pyautogui.rightClick(pos)
+        # self.deiconify() # show the window
+    
+    def addTextMarker(self):
+        self.clicks[-1] = ('Text','Text','Text') # replace the click on this button with a marker for the csv reader to parse
+
     # write clicks to a .csv file
-    def write_clicks(self, filename): #! why is this not part of the class?
-        with open(filename,'w') as clickList: 
-            #selects a subset of clicks that excludes the first and last two clicks in the series
-            for click in self.clicks[1:-2]: # iterate between [1,-2] to clip out 
+    def write_clicks(self, filename):
+        if 'clickSequences' not in os.listdir():
+            os.mkdir('clickSequences')
+        with open(os.path.join('.', 'clickSequences', filename),'w') as clickList: 
+            for click in self.clicks[0:-1]: # clip out last click
                 clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
 
     # method to add clicks to list
@@ -141,7 +167,5 @@ class recorderGUI(tk.Tk):
 
 
 if __name__ == '__main__':
-    # start listening for clicks
-
     root = recorderGUI() 
     root.mainloop()
