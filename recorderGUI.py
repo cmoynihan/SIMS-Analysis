@@ -13,12 +13,14 @@ screenWidth, screenHeight = pyautogui.size() #! this is never used again, why is
 #GUI window class
 class recorderGUI(tk.Tk):
     '''
-    GUI class for click recorder. Has 4 buttons: Record, Stop, Play, Done, and an entry box.
+    GUI class for click recorder. Has 5 buttons: Record, Pause, Stop, Play, Done, and an entry box.
 
     Record: Records a sequence of clicks until the user clicks Stop. Can record left and right clicks
+    Pause: Pauses the recording until user clicks Record again
     Stop: Stops the recording and writes to a .csv with the name indicated in the entry box
     Play: Reads the .csv file with the name in the entry box, then reproduces the clicks with pyautogui
     Done: Clears the entry box
+    
     '''
     
     def __init__(self):
@@ -26,6 +28,7 @@ class recorderGUI(tk.Tk):
         self.title('Button Sequencer')
         self.recording = False
         self.clicks = []
+        self.attributes('-topmost', True)
         mouse_listener = mouse.Listener(on_click=self.on_click)
         mouse_listener.start()
         
@@ -39,6 +42,7 @@ class recorderGUI(tk.Tk):
         frame.grid_rowconfigure(1, w=1)
         frame.grid_rowconfigure(0, w=1)
         frame.grid_rowconfigure(2, w=1)
+        frame.grid_rowconfigure(3, w=1)
 
         #add buttons, label, and entry box and bind to the respective methods
         self.Record = ttk.Button(frame, text='Record', command=self.record, state=NORMAL) 
@@ -46,30 +50,36 @@ class recorderGUI(tk.Tk):
         self.Stop = ttk.Button(frame, text='Stop', command=self.stop, state=DISABLED)
         self.Stop.grid(row=1, column=1, sticky='ew')
         self.Play = ttk.Button(frame, text='Play', command=self.play)
-        self.Play.grid(row=2,column=0,sticky='ew')
+        self.Play.grid(row=2, column=1, sticky='ew')
+        self.Pause = ttk.Button(frame, text='Pause', command=self.pause, state=DISABLED)
+        self.Pause.grid(row=2, column=0, sticky='ew')
         self.inputLabel = tk.Label(frame, text='Input file name:')
-        self.inputLabel.grid(row=0, column=0,sticky='e')
+        self.inputLabel.grid(row=0, column=0, sticky='e')
         self.entry = tk.Entry(frame)
         self.entry.grid(row=0, column=1, sticky='ew')
-        self.Done = ttk.Button(frame, text='Done', command=self.done)
-        self.Done.grid(row=2, column=1, sticky='ew')
+        self.Clear = ttk.Button(frame, text='Clear', command=self.clear)
+        self.Clear.grid(row=3, column=0, sticky='ew')
 
-    #done button binding
-    def done(self):
+    # clear button binding
+    def clear(self):
         self.entry.delete(0,END) #! probably could just use a lambda function here command=lambda : self.entry.delete(0,END)
 
-    #record button binding. Records the locations of a series of clicks to a file.
+    # record button binding. Records the locations of a series of clicks to a file.
     def record(self):
         banned = '/\.?%'
-        if any(elem in self.entry.get() for elem in banned):
+        if any(elem in self.entry.get() for elem in banned) or len(self.entry.get()) == 0:
             messagebox.showerror(title='Error', message='Please input a valid filename!')
-            self.done()
+            self.clear()
             return
-        
         filename = self.entry.get() + '.csv'
 
+        self.entry['state'] = DISABLED
+        self.Record['state'] = DISABLED
+        self.Pause['state'] = NORMAL
+        self.Play['state'] = DISABLED
+        self.Clear['state'] = DISABLED
         #check for duplicates
-        if filename in os.listdir(): 
+        if filename in os.listdir():
             #if a duplicate is found, ask the user if they would like to replace it
             replace = messagebox.askyesno(title="Replace saved file?", message='The filename you have input already exists. Do you want to replace it?')
             if not replace:
@@ -80,22 +90,31 @@ class recorderGUI(tk.Tk):
     
     #stop button binding. Ends recording
     def stop(self):
-        filename = self.entry.get() + '.csv'
+        try:
+            filename = self.entry.get() + '.csv'
+            self.write_clicks(filename) #write click recording to a file
+            messagebox.showinfo(message='Recording saved!')
+        except PermissionError:#! you probably want to return after this so that the user can close the file and try again. If you don't you will disable the stop button on them
+            ok = messagebox.askokcancel(title='Permission Error', message='Recording cannot be saved. Close the .csv file if it is open and click OK.') 
+            if ok:
+                self.stop()
         self.recording = False # turn off click recording 
         self.Stop['state'] = DISABLED # grey out stop button
-        # try:
-        write_clicks(self.clicks, filename) #write click recording to a file
-        messagebox.showinfo(message='Recording saved!')
-        self.clicks = [] # clear list that temporarily stores clicks
-        # except: #! best not to use blanket try except, specify the error that way to catch unknown errors
-        #     messagebox.showerror(title='Error', message='Recording was not saved. Make sure that the .csv file is not open.') #! you probably want to return after this so that the user can close the file and try againg. If you don't you will disable the stop button on them
-        
+        self.Record['state'] = NORMAL
+        self.entry['state'] = NORMAL
+        self.Play['state'] = NORMAL
+        self.clicks = []
+
+    def pause(self):
+        if self.recording:
+            self.recording = False
+            self.Record['state'] = NORMAL
+
     # play button binding. Plays back recording with the filename indicated in the Entry box
     def play(self):
         try:
             clicklist = pd.read_csv(self.entry.get() + '.csv', names=['x','y', 'button']) # read clicks from file into a dataframe
             # iterate through the rows of the dataframe to extract click locations
-            print(clicklist)
             for index, row in clicklist.iterrows():
                 # left or right click based on input
                 if row['button'] == 'Button.left':
@@ -104,29 +123,24 @@ class recorderGUI(tk.Tk):
                     pyautogui.rightClick(row['x'], row['y'])
         except FileNotFoundError:
             messagebox.showerror(title="Error", message="File not found")
-            self.done()
+            self.clear()
         
-        # except: #! again don't use blanket try except
-        #     messagebox.showerror("Error","Please input a valid filename! (.csv file extension automatically added)")
-    
+    # write clicks to a .csv file
+    def write_clicks(self, filename): #! why is this not part of the class?
+        with open(filename,'w') as clickList: 
+            #selects a subset of clicks that excludes the first and last two clicks in the series
+            for click in self.clicks[1:-2]: # iterate between [1,-2] to clip out 
+                clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
+
     # method to add clicks to list
     def on_click(self, x, y, button, pressed):
         if pressed and self.recording:
             self.clicks.append((x,y, button))
-            print(x,',',y, ',',button) #! print statement not use in GUI maybe make a updating Text Box
 
-# write clicks to a .csv file
-def write_clicks(clickArray, filename): #! why is this not part of the class?
-    # print('writing,', clickArray[1:-2]) #! git rid of this is not using it
-    with open(str(filename),'w') as clickList: #! why do you need to recast filename as a string?
-        #selects a subset of clicks that excludes the first and last two clicks in the series
-        for click in clickArray[1:-2]: #! not intuitive why you need to itearate over 1:-2, why does a user not want the first or last two? maybe you should start the listener after clicking record
-            clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
 
 
 
 if __name__ == '__main__':
-    tk.DISABLED
     # start listening for clicks
 
     root = recorderGUI() 
