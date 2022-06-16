@@ -1,6 +1,6 @@
-import pyautogui
-import pandas as pd
 from tkinter import messagebox #! standard library packages first
+import pandas as pd
+import pyautogui
 import readDepth
 
 def readClicks(clickfile): #! this code feels repeated from exporter but maybe I am wrong
@@ -36,7 +36,7 @@ if __name__ == '__main__':
             readClicks('sequence3.csv')
             pyautogui.PAUSE = pauseTime
             for i in range(4): #save image data
-                name = f'{time[0]}s-{time[1]}s_{species[i]}' # I would rather it be `iteration_species.dat`
+                name = f'{time[0]}s-{time[1]}s_{species[i]}_image' # I would rather it be `iteration_species.dat`
                 readClicks('sequence4.csv')
                 clearEntry()
                 pyautogui.typewrite(name + '.dat')
