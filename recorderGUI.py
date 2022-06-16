@@ -5,10 +5,6 @@ import pyautogui
 import pandas as pd
 from pynput import mouse
 
-pyautogui.PAUSE = 1 # delay (in seconds) between pyautogui calls
-recording = False # False if the program is not recording to the click list, True if it is
-clicks = [] #list to temporarily store locations of clicks during recording
-screenWidth, screenHeight = pyautogui.size() #! this is never used again, why is it needed?
 
 #GUI window class
 class recorderGUI(tk.Tk):
@@ -32,6 +28,8 @@ class recorderGUI(tk.Tk):
         self.attributes('-topmost', True)
         mouse_listener = mouse.Listener(on_click=self.on_click)
         mouse_listener.start()
+
+        pyautogui.PAUSE = 1 # delay (in seconds) between pyautogui calls        
         
         #configure window
         self.grid_columnconfigure(0, w=1) 
@@ -125,6 +123,7 @@ class recorderGUI(tk.Tk):
             self.clicks.pop()
             self.Record['state'] = NORMAL
             self.AddTextMarker['state'] = DISABLED
+            self.Pause['state'] = DISABLED
 
     # play button binding. Plays back recording with the filename indicated in the Entry box
     def play(self):
@@ -135,7 +134,7 @@ class recorderGUI(tk.Tk):
             self.clear()
             return
 
-        # self.withdraw() # hide the window
+        self.withdraw() # hide the window
         # iterate through the rows of the dataframe to extract click locations
         for index, row in clicklist.iterrows():
             if row['x'] != 'Text':
@@ -145,7 +144,7 @@ class recorderGUI(tk.Tk):
                     pyautogui.click(pos)
                 elif row['button'] == 'Button.right':
                     pyautogui.rightClick(pos)
-        # self.deiconify() # show the window
+        self.deiconify() # show the window
     
     def addTextMarker(self):
         self.clicks[-1] = ('Text','Text','Text') # replace the click on this button with a marker for the csv reader to parse
@@ -162,9 +161,6 @@ class recorderGUI(tk.Tk):
     def on_click(self, x, y, button, pressed):
         if pressed and self.recording:
             self.clicks.append((x,y, button))
-
-
-
 
 if __name__ == '__main__':
     root = recorderGUI() 
