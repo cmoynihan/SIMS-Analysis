@@ -1,3 +1,4 @@
+from ast import Delete
 import tkinter as tk 
 import os
 from tkinter import DISABLED, END, NORMAL, ttk, messagebox
@@ -62,8 +63,10 @@ class recorderGUI(tk.Tk):
         self.Clear.grid(row=3, column=0, sticky='ew')
         self.AddTextMarker = ttk.Button(frame, text='Add Text Marker', command=self.addTextMarker, state=DISABLED)
         self.AddTextMarker.grid(row=3, column=1, sticky='ew')
-        self.Loop = ttk.Button(frame, text='Begin Loop', command=self.toggleLoop, state = DISABLED)
+        self.Loop = ttk.Button(frame, text='Begin Loop', command=self.toggleLoop, state=DISABLED)
         self.Loop.grid(row=4, column=0, sticky='ew')
+        self.Del = ttk.Button(frame, text='Delete Last Click', command=self.delete, state=DISABLED)
+        self.Del.grid(row=4, column=1, sticky='ew')
 
         # disable window resizing
         self.resizable(False, False)
@@ -95,6 +98,7 @@ class recorderGUI(tk.Tk):
         self.Record['state'] = DISABLED
         self.Pause['state'] = NORMAL
         self.Loop['state'] = NORMAL
+        self.Del['state'] = NORMAL
         self.paused = False
         self.recording = True
         self.Stop['state'] = NORMAL #make the "Stop" button not grey
@@ -120,6 +124,7 @@ class recorderGUI(tk.Tk):
         self.Stop['state'] = DISABLED # grey out stop button
         self.Record['state'] = NORMAL
         self.entry['state'] = NORMAL
+        self.Del['state'] = DISABLED
         self.Play['state'] = NORMAL
         self.Clear['state'] = NORMAL
         self.AddTextMarker['state'] = DISABLED
@@ -166,6 +171,10 @@ class recorderGUI(tk.Tk):
         else:
             self.Loop['text'] = 'Begin Loop'
         self.clicks[-1] = ('Loop', 'Loop', 'Loop')
+    
+    def delete(self):
+        self.clicks.pop()
+        self.clicks.pop()
 
     # write clicks to a .csv file
     def write_clicks(self, filename, clip=True):
