@@ -14,7 +14,8 @@ class recorderGUI(tk.Tk):
     Pause: Pauses the recording until user clicks Record again
     Stop: Stops the recording and writes to a .csv with the name indicated in the entry box
     Play: Reads the .csv file with the name in the entry box, then reproduces the clicks with pyautogui
-    Done: Clears the entry box
+    Clear: Clears the entry box
+    Add Text Marker: Adds an entry to the .csv file indicating to the reader program that text goes here
     
     
     '''
@@ -42,6 +43,7 @@ class recorderGUI(tk.Tk):
         frame.grid_rowconfigure(0, w=1)
         frame.grid_rowconfigure(2, w=1)
         frame.grid_rowconfigure(3, w=1)
+        frame.grid_rowconfigure(4, w=1)
 
         #add buttons, label, and entry box and bind to the respective methods
         self.Record = ttk.Button(frame, text='Record', command=self.record, state=NORMAL) 
@@ -60,6 +62,8 @@ class recorderGUI(tk.Tk):
         self.Clear.grid(row=3, column=0, sticky='ew')
         self.AddTextMarker = ttk.Button(frame, text='Add Text Marker', command=self.addTextMarker, state=DISABLED)
         self.AddTextMarker.grid(row=3, column=1, sticky='ew')
+        self.Loop = ttk.Button(frame, text='Begin Loop', command=self.toggleLoop, state = DISABLED)
+        self.Loop.grid(row=4, column=0, sticky='ew')
 
         # disable window resizing
         self.resizable(False, False)
@@ -90,6 +94,7 @@ class recorderGUI(tk.Tk):
         self.AddTextMarker['state'] = NORMAL
         self.Record['state'] = DISABLED
         self.Pause['state'] = NORMAL
+        self.Loop['state'] = NORMAL
         self.paused = False
         self.recording = True
         self.Stop['state'] = NORMAL #make the "Stop" button not grey
@@ -98,9 +103,14 @@ class recorderGUI(tk.Tk):
     def stop(self):
         try:
             filename = self.entry.get() + '.csv'
-            self.write_clicks(filename) #write click recording to a file
+            if self.Loop['text'] == 'End Loop':
+                self.toggleLoop()
+                self.write_clicks(filename, clip=False) # write click recording to a file without clipping
+            else:
+                self.write_clicks(filename)
             messagebox.showinfo(message='Recording saved!')
-        except PermissionError:#! you probably want to return after this so that the user can close the file and try again. If you don't you will disable the stop button on them
+        except PermissionError:
+            self.pause() # pause so that recorder doesn't record the user closing out
             ok = messagebox.askokcancel(title='Permission Error', message='Recording cannot be saved. Close the .csv file if it is open and click OK.') 
             if ok:
                 self.stop()
@@ -113,6 +123,7 @@ class recorderGUI(tk.Tk):
         self.Play['state'] = NORMAL
         self.Clear['state'] = NORMAL
         self.AddTextMarker['state'] = DISABLED
+        self.Loop['state'] = DISABLED
         self.clicks = []
 
     # pause button method
@@ -149,13 +160,24 @@ class recorderGUI(tk.Tk):
     def addTextMarker(self):
         self.clicks[-1] = ('Text','Text','Text') # replace the click on this button with a marker for the csv reader to parse
 
+    def toggleLoop(self):
+        if self.Loop['text'] == 'Begin Loop':
+            self.Loop['text'] = 'End Loop'
+        else:
+            self.Loop['text'] = 'Begin Loop'
+        self.clicks[-1] = ('Loop', 'Loop', 'Loop')
+
     # write clicks to a .csv file
-    def write_clicks(self, filename):
+    def write_clicks(self, filename, clip=True):
         if 'clickSequences' not in os.listdir():
             os.mkdir('clickSequences')
         with open(os.path.join('.', 'clickSequences', filename),'w') as clickList: 
-            for click in self.clicks[0:-1]: # clip out last click
-                clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
+            if clip:
+                for click in self.clicks[0:-1]: # clip out last click
+                    clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
+            else:
+                for click in self.clicks:
+                    clickList.write(f'{click[0]},{click[1]},{click[2]}\n')
 
     # method to add clicks to list
     def on_click(self, x, y, button, pressed):

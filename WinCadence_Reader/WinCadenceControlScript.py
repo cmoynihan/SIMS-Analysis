@@ -3,6 +3,8 @@ import os
 import time
 import pandas as pd
 import pyautogui
+import controlScript
+import readDepth as rd
 
 def readClicks(clickfile):
     '''
@@ -68,5 +70,6 @@ def inputText(textInstance):
 if __name__ == '__main__':
     time.sleep(2)
     pyautogui.PAUSE = 1
-    readClicks('paintyBoi.csv')
+    depth = rd.readDepth('Depth.txt')
+
 
