@@ -32,6 +32,8 @@ def readClicks(clickfile, textList, loopLengths):
                         pyautogui.click(pos)
                     elif row['button'] == 'Button.right':
                         pyautogui.rightClick(pos)
+                if textInstance > len(textList):
+                    print(row)
                 elif textList[textInstance] == 'down':
                     pyautogui.press('down')
                     textInstance += 1
