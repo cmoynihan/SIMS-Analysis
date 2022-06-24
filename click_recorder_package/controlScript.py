@@ -17,39 +17,28 @@ def readClicks(clickfile, textList, loopLengths):
 
     No outputs
     '''
-    clicklist = pd.read_csv(os.path.join('clickSequences', clickfile), names=['x','y', 'button'])
+    clicklist = pd.read_csv(os.path.join(clickfile), names=['x','y', 'button'])
     textInstance = 0 # counter that logs which text instance the script is
     sections = getLoops(clicklist) # break the clicklist up into sections based on where the loops begin and end
     # iterate through the rows of the dataframe to extract click locations
+    print(len(sections))
     for i in range(len(sections)):
-        if i % 2 == 1:
-            for j in range(loopLengths[int(i / 2)]):
-                for index, row in sections[i].iterrows():
-                    if row['x'] != 'Text':
-                        # left or right click based on input
-                        pos = tuple((row['x'], row['y']))
-                        if row['button'] == 'Button.left':
-                            pyautogui.click(pos)
-                        elif row['button'] == 'Button.right':
-                            pyautogui.rightClick(pos)
-                    else:
-                        clearEntry(pos)
-                        inputText(textList[textInstance])
-                        textInstance += 1
-        else:
+        for j in range(loopLengths[int(i / 2)] if i % 2 == 1 else 1):
             for index, row in sections[i].iterrows():
-                    if row['x'] != 'Text':
-                        print(tuple((row['x'], row['y'], row['button'])))
-                        # left or right click based on input
-                        pos = tuple((row['x'], row['y']))
-                        if row['button'] == 'Button.left':
-                            pyautogui.click(pos)
-                        elif row['button'] == 'Button.right':
-                            pyautogui.rightClick(pos)
-                    else:
-                        clearEntry(pos)
-                        inputText(textList[textInstance])
-                        textInstance += 1
+                if row['x'] != 'Text':
+                    # left or right click based on input
+                    pos = tuple((row['x'], row['y']))
+                    if row['button'] == 'Button.left':
+                        pyautogui.click(pos)
+                    elif row['button'] == 'Button.right':
+                        pyautogui.rightClick(pos)
+                elif textList[textInstance] == 'down':
+                    pyautogui.press('down')
+                    textInstance += 1
+                else:
+                    clearEntry(pos)
+                    pyautogui.write(textList[textInstance])
+                    textInstance += 1
             
 
 def getLoops(clicklist):
@@ -70,6 +59,7 @@ def getLoops(clicklist):
         if row['x'] == 'Loop':
             sections.append(clicklist[begin:index])
             begin = index + 1
+    sections.append(clicklist[begin:])
     return sections
 
 def clearEntry(entryLocation):
@@ -83,28 +73,16 @@ def clearEntry(entryLocation):
 
     No outputs
     '''
+    old_pause = pyautogui.PAUSE
+    pyautogui.PAUSE = 0
     pyautogui.doubleClick(entryLocation)
     pyautogui.hotkey('backspace')
-
-# put in your text here
-def inputText(textInstance):
-    '''
-    inputText()
-    Writes text into a text box, can write different messages based on the input.
-
-    Inputs:
-    textInstance - The text instance number for a given text box. Allows different
-                   text to be entered based on the entry number.
-    '''
-    # read first entry to list
-    if textInstance == 0:
-        pyautogui.write('First text entry')
-    elif textInstance == 1:
-        pyautogui.write('Second text entry')
-    elif textInstance == 2:
-        pyautogui.write('Third text entry')
-    elif textInstance == 3:
-        pyautogui.write('Fourth text entry')
+    pyautogui.hotkey('Ctrl' + 'a')
+    pyautogui.hotkey('backspace')
+    pyautogui.hotkey('end')
+    for i in range(10):
+        pyautogui.hotkey('backspace')
+    pyautogui.PAUSE = old_pause
 
 if __name__ == '__main__':
     time.sleep(2)

@@ -17,7 +17,7 @@ class recorderGUI(tk.Tk):
     Play: Reads the .csv file with the name in the entry box, then reproduces the clicks with pyautogui
     Clear: Clears the entry box
     Add Text Marker: Adds an entry to the .csv file indicating to the reader program that text goes here
-    
+    Begin/End Loop: Adds a marker to the .csv output file indicating to the reader to start a loop.
     
     '''
     
@@ -152,14 +152,17 @@ class recorderGUI(tk.Tk):
 
         self.withdraw() # hide the window
         # iterate through the rows of the dataframe to extract click locations
-        for index, row in clicklist.iterrows():
-            if row['x'] != 'Text':
-                # left or right click based on input
-                pos = tuple((row['x'], row['y']))
-                if row['button'] == 'Button.left':
-                    pyautogui.click(pos)
-                elif row['button'] == 'Button.right':
-                    pyautogui.rightClick(pos)
+        try:
+            for index, row in clicklist.iterrows():
+                if row['x'] != 'Text':
+                    # left or right click based on input
+                    pos = tuple((row['x'], row['y']))
+                    if row['button'] == 'Button.left':
+                        pyautogui.click(pos)
+                    elif row['button'] == 'Button.right':
+                        pyautogui.rightClick(pos)
+        except pyautogui.FailSafeException:
+            pass
         self.deiconify() # show the window
     
     def addTextMarker(self):

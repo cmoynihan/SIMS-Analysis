@@ -23,6 +23,4 @@ def readDepth(filename): #
     data['Time Window Upper Bound'] = data['Actual Time'] + 1
     data['Time Window'] = data[['Time Window Lower Bound','Time Window Upper Bound']].apply(tuple, axis=1)
 
-    data.drop('Time Window Lower Bound', axis=1)
-    data.drop('Time Window Upper Bound', axis=1)
     return data
